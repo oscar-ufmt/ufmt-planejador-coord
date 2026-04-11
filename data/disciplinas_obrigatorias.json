@@ -1,0 +1,437 @@
+[
+  {
+    "codigo": "114300071",
+    "nome": "Algoritmos e Estruturas de Dados I",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 1,
+    "ppc_20261": 1
+  },
+    {
+    "codigo": "114300004",
+    "nome": "Cálculo I ",
+    "carga_horaria": "96h",
+    "prerequisitos": [],
+      "ppc_20251": 1,
+      "ppc_20261": 1
+  },
+  {
+    "codigo": "114200306",
+    "nome": "Escrita Científica",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 1,
+    "ppc_20261": 1
+  },
+     {
+    "codigo": "114200305",
+    "nome": "Ciência, Tecnologia e Sociedade",
+    "carga_horaria": "32h",
+    "prerequisitos": [],
+       "ppc_20251": 1,
+       "ppc_20261": 1
+  },
+    {
+    "codigo": "114100014",
+    "nome": "Química Geral",
+    "carga_horaria": "32h",
+    "prerequisitos": [],
+      "ppc_20251": 1,
+      "ppc_20261": 1
+  },
+   
+  {
+    "codigo": "114100015",
+    "nome": "Química Geral Experimental",
+    "carga_horaria": "32h",
+    "prerequisitos": [],
+    "ppc_20251": 1,
+    "ppc_20261": 1
+  }, 
+
+     {
+    "codigo": "114200405",
+    "nome": "Sistemas Digitais",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+       "ppc_20251": 1,
+       "ppc_20261": 1
+  },
+  {
+    "codigo": "114300006",
+    "nome": "Álgebra Linear",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 2,
+    "ppc_20261": 2
+  },
+   {
+    "codigo": "114300024",
+    "nome": "Algoritmos e Estruturas de Dados II",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300071"],
+     "ppc_20251": 2,
+     "ppc_20261": 2
+  },
+  {
+    "codigo": "114300005",
+    "nome": "Cálculo II",
+    "carga_horaria": "96h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 2,
+    "ppc_20261": 2
+  },
+  {
+    "codigo": "114200311",
+    "nome": "Circuitos Elétricos",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 2,
+    "ppc_20261": 2
+  },
+  {
+    "codigo": "114300007",
+    "nome": "Matemática Discreta",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 2,
+    "ppc_20261": 2
+  },
+  {
+    "codigo": "114200313",
+    "nome": "Organização de Computadores",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300071"],
+    "ppc_20251": 2,
+    "ppc_20261": 2
+  },
+  {
+    "codigo": "114200314",
+    "nome": "Algoritmos e Estruturas de Dados III",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300024"],
+    "ppc_20251": 3,
+    "ppc_20261": 3
+  },
+  {
+    "codigo": "114100007",
+    "nome": "Cálculo III",
+    "carga_horaria": "96h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 3,
+    "ppc_20261": 3
+  },
+  {
+    "codigo": "114200316",
+    "nome": " Circuitos Eletrônicos",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200405"],
+    "ppc_20251": 3,
+    "ppc_20261": 3
+  },
+  {
+    "codigo": "114300009",
+    "nome": "Física I",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 3,
+    "ppc_20261": 3
+  },
+  {
+    "codigo": "114300010",
+    "nome": "Física Experimental I",
+    "carga_horaria": "32h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 3,
+    "ppc_20261": 3
+  },
+  {
+    "codigo": "114300008",
+    "nome": "Probabilidade e Estatística",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 3,
+    "ppc_20261": 4
+  },
+  {
+    "codigo": "114200320",
+    "nome": " Ciência dos Materiais",
+    "carga_horaria": "32h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 4,
+    "ppc_20261": 4
+  },
+  {
+    "codigo": "114300062",
+    "nome": "Física III",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 4,
+    "ppc_20261": 4
+  },
+  {
+    "codigo": "114300013",
+    "nome": "Física Experimental III",
+    "carga_horaria": "32h",
+    "prerequisitos": ["114300004"],
+    "ppc_20261": 4,
+    "ppc_20251": 4
+  },
+  {
+    "codigo": "114300017",
+    "nome": " Microcontroladores",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200405"],
+    "ppc_20251": 4,
+    "ppc_20261": 5
+  },
+  {
+    "codigo": "114200324",
+    "nome": " Modelagem Gráfica ",
+    "carga_horaria": "32h",
+    "prerequisitos": ["114300005"],
+    "ppc_20251": 4,
+    "ppc_20261": 7
+  },
+  {
+    "codigo": "114200325",
+    "nome": "Programação Orientada a Objetos",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300024"],
+    "ppc_20251": 4,
+    "ppc_20261": 3
+  },
+  {
+    "codigo": "114200326",
+    "nome": "Arquitetura de Computadores",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300071", "114200405"],
+    "ppc_20251": 5,
+    "ppc_20261": 5
+  },
+  {
+    "codigo": "114300030",
+    "nome": "Inteligência Artificial",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300004", "114300071"],
+    "ppc_20251": 5,
+    "ppc_20261": 5
+  },
+  {
+    "codigo": "114200328",
+    "nome": "Introdução à Engenharia de Software",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300024"],
+    "ppc_20251": 5,
+    "ppc_20261": 5
+  },
+  {
+    "codigo": "114200329",
+    "nome": "Matemática Financeira",
+    "carga_horaria": "64h",
+    "ppc_20251": 5,
+    "ppc_20261": 6
+  },
+  {
+    "codigo": "114300016",
+    "nome": "Sinais e Sistemas",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114100007"],
+    "ppc_20251": 5,
+    "ppc_20261": 4
+  },
+  {
+    "codigo": "114200331",
+    "nome": "Sistemas Operacionais",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300024"],
+    "ppc_20251": 5,
+    "ppc_20261": 5
+  },
+  {
+    "codigo": "114200333",
+    "nome": "Atitude Empreendedora",
+    "carga_horaria": "64h",
+    "ppc_20251": 6,
+    "ppc_20261": 6
+  },
+  {
+    "codigo": "114200334",
+    "nome": "Banco de Dados I",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300024"],
+    "ppc_20251": 6,
+    "ppc_20261": 4
+  },
+  {
+    "codigo": "114200335",
+    "nome": "Laboratório de Arquitetura de Computadores",
+    "carga_horaria": "32h",
+    "prerequisitos": ["114200326","114200313"],
+    "ppc_20251": 6,
+    "ppc_20261": 6
+  },
+  {
+    "codigo": "114200336",
+    "nome": "Mecânica dos Sólidos",
+    "carga_horaria": "32h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 6,
+    "ppc_20261": 6
+  },
+  {
+    "codigo": "114300019",
+    "nome": "Processamento de Sinais",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300016"],
+    "ppc_20251": 6,
+    "ppc_20261": 5
+  },
+  {
+    "codigo": "114200338",
+    "nome": "Projeto e Análise de Algoritmos",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200314","114300007"],
+    "ppc_20251": 6,
+    "ppc_20261": 6
+  },
+  {
+    "codigo": "114300021",
+    "nome": "Sistemas Embarcados",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300017"],
+    "ppc_20251": 6,
+    "ppc_20261": 6
+  },
+  {
+    "codigo": "114100009",
+    "nome": "Fenômenos de Transporte",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300004"],
+    "ppc_20251": 7,
+    "ppc_20261": 7
+  },
+  {
+    "codigo": "114300018",
+    "nome": "Instrumentação Industrial I",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200311","114200316"],
+    "ppc_20251": 7,
+    "ppc_20261": 7
+  },
+  {
+    "codigo": "114200342",
+    "nome": "Projeto de Engenharia e Computação I",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200334","114300030","114300017","114200325","114200331"],
+    "ppc_20251": 7,
+    "ppc_20261": 7
+  },
+  {
+    "codigo": "114200343",
+    "nome": "Redes de Computadores",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200331"],
+    "ppc_20251": 7,
+    "ppc_20261": 7
+  },
+  {
+    "codigo": "114200397",
+    "nome": "Automação Industrial",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300018"],
+    "ppc_20251": 8,
+    "ppc_20261": 8
+  },
+  {
+    "codigo": "114200398",
+    "nome": "Introdução Aos Sistemas de Controle",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114300016"],
+    "ppc_20251": 8,
+    "ppc_20261": 8
+  },
+  {
+    "codigo": "114200399",
+    "nome": "Projeto de Engenharia e Computação II",
+    "carga_horaria": "64h",
+    "prerequisitos": ["114200342"],
+    "ppc_20251": 8,
+    "ppc_20261": 8
+  },
+  {
+    "codigo": "114200344",
+    "nome": "Teoria da Computação",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 7,
+    "ppc_20261": 7
+  },
+  {
+    "codigo": "114200400",
+    "nome": "Trabalho de Conclusão de Curso I",
+    "carga_horaria": "16h",
+    "prerequisitos": ["114200399","114200306"],
+    "ppc_20251": 9,
+    "ppc_20261": 9
+  },
+  {
+    "codigo": "114200401",
+    "nome": "Trabalho de Conclusão de Curso II",
+    "carga_horaria": "16h",
+    "prerequisitos": ["114200400"],
+    "ppc_20251": 10,
+    "ppc_20261": 10
+  },
+  {
+    "codigo": "114200404",
+    "nome": " Estágio Curricular Supervisionado",
+    "carga_horaria": "160h",
+    "prerequisitos": ["114200314","114300017"],
+    "ppc_20251": 10,
+    "ppc_20261": 10
+  }
+,
+  {
+    "codigo": "114200402",
+    "nome": " Atividades Complementares",
+    "carga_horaria": "160h",
+    "prerequisitos": [],
+    "ppc_20251": 10,
+    "ppc_20261": 10
+  }
+,
+  {
+    "codigo": "114200403",
+    "nome": " Atividades de Extensão",
+    "carga_horaria": "384h",
+    "prerequisitos": [],
+    "ppc_20251": 10,
+    "ppc_20261": 10
+  },
+
+  {
+    "codigo": "1",
+    "nome": "Optativa I",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 8,
+    "ppc_20261": 8
+  },
+  {
+    "codigo": "2",
+    "nome": "Optativa II",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 8,
+    "ppc_20261": 9
+  },
+  {
+    "codigo": "3",
+    "nome": "Optativa III",
+    "carga_horaria": "64h",
+    "prerequisitos": [],
+    "ppc_20251": 8,
+    "ppc_20261": 10
+  }
+]

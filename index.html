@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFMT | Planejador Acadêmico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="main-header">
+    <div class="header-container">
+        <div class="brand">
+            <h1>UFMT</h1>
+            <span>Planejador Acadêmico</span>
+        </div>
+
+        <div class="student-info">
+            <div class="input-row">
+                <input type="text" id="alunoNome" placeholder="Nome do Discente" oninput="salvarInfoAdicional()">
+                <input type="text" id="alunoSEI" placeholder="Processo SEI" oninput="salvarInfoAdicional()">
+            </div>
+            <div class="academic-config">
+                <div class="config-item">
+                    <label>Ingresso:</label>
+                    <input type="number" id="ingressoAno" value="2022" oninput="salvarInfoAdicional()">
+                    <select id="ingressoSemestre" onchange="salvarInfoAdicional()">
+                        <option value="1">1º Sem</option>
+                        <option value="2">2º Sem</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>PPC Ingresso:</label>
+                    <select id="ppcIngresso" onchange="salvarInfoAdicional()">
+                        <option value="2014">2014</option>
+                        <option value="2020">2020</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Trancamentos:</label>
+                    <input type="number" id="trancamentos" value="0" min="0" oninput="salvarInfoAdicional()">
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="gerarPDF()" class="btn-outline">📄 PDF</button>
+            <button onclick="exportarExcel()" class="btn-outline">📊 Excel</button>
+            <button onclick="exportarJSON()" class="btn-outline">📤 Exportar Aluno</button>
+            <button onclick="document.getElementById('inputImport').click()" class="btn-outline">📥 Importar Aluno</button>
+            <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarJSON(event)">
+            <button onclick="addSemestre()" class="btn-primary">+ Semestre</button>
+            <button onclick="limparDados()" class="btn-danger-outline">Resetar</button>
+        </div>
+    </div>
+
+    <!-- NAVEGAÇÃO ENTRE ABAS -->
+    <div class="tab-nav">
+        <button id="btn-planejador" class="tab-btn active" onclick="mudarAba('planejador')">🛠️ Planejador Individual</button>
+        <button id="btn-gestao" class="tab-btn" onclick="mudarAba('gestao')">📁 Gestão da Base (Colegiado)</button>
+        <button id="btn-oferta" class="tab-btn" onclick="mudarAba('oferta')">📊 Relatório de Oferta Consolidado</button>
+    </div>
+</header>
+
+<main class="app-layout">
+
+    <!-- ABA 1: PLANEJADOR (AQUI É ONDE O CAMPO 2 FICA NA ESQUERDA) -->
+    <div id="aba-planejador" class="tab-content">
+        <div id="painelPrazos" class="painel-prazos"></div>
+
+        <section class="secao-historico">
+            <header class="section-header">
+                <h3>1. Fluxograma de Disciplinas (Clique para marcar como Cursada)</h3>
+                <div class="filtro-box">
+                    <label>Ver Oferta PPC:</label>
+                    <select id="filtroPPC" onchange="renderizarTudo()">
+                        <option value="20251">2025/1</option>
+                        <option value="20261" selected>2026/1</option>
+                    </select>
+                </div>
+            </header>
+            <div id="checklistObrigatorias" class="kanban-container"></div>
+        </section>
+
+        <!-- DIVISÃO EM COLUNAS: PENDÊNCIAS (ESQ) | PLANEJAMENTO (DIR) -->
+        <div class="planejamento-split">
+            <aside class="sidebar-pendencias">
+                <h3>2. Pendências</h3>
+                <div id="listaDisponiveis" class="lista-vertical-cards"></div>
+            </aside>
+            <section class="area-grade">
+                <h3>3. Planejamento</h3>
+                <div id="gradeSemestres" class="kanban-container"></div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ABA 2: GESTÃO DA BASE -->
+    <div id="aba-gestao" class="tab-content" style="display:none; padding: 20px;">
+        <section class="card-prazo" style="text-align: left; padding: 25px; border-top: 5px solid var(--primary); max-width: 1600px; margin: 0 auto;">
+            <h3>📁 Gerenciamento da Base de Dados (Colegiado)</h3>
+            <div class="actions-gestao" style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+                <input type="file" id="importBase" style="display:none" accept=".json" onchange="importarBaseColegiado(event)">
+                <button onclick="document.getElementById('importBase').click()" class="btn-outline-dark">📥 Carregar Base Mestre</button>
+                <button onclick="salvarAlunoNaBase()" class="btn-success">💾 Salvar Aluno Atual na Base</button>
+                <button onclick="exportarBaseColegiado()" class="btn-primary">📤 Baixar Base Atualizada</button>
+            </div>
+            <div id="statusBase" style="margin-bottom: 20px; font-weight: bold;">Nenhuma base carregada.</div>
+            <div id="listaAlunosColegiado" class="grid-alunos"></div>
+        </section>
+    </div>
+
+    <!-- ABA 3: RELATÓRIO CONSOLIDADO -->
+    <div id="aba-oferta" class="tab-content" style="display:none; padding: 20px;">
+        <section style="max-width: 1600px; margin: 0 auto;">
+            <div class="card-prazo" style="text-align: left; padding: 25px;">
+                <h3>📊 Consolidação de Oferta por Semestre</h3>
+                <div class="input-relatorio-box" style="display: flex; gap: 10px; align-items: center; margin: 20px 0;">
+                    <label><b>Semestre de Referência:</b></label>
+                    <input type="text" id="inputSemestreRelatorio" placeholder="Ex: 2026/2" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button onclick="gerarRelatorioOferta()" class="btn-primary">Gerar Relatório</button>
+                </div>
+                <div id="containerRelatorioOferta"></div>
+            </div>
+        </section>
+    </div>
+
+</main>
+
+<script src="js/script.js"></script>
+</body>
+</html>
