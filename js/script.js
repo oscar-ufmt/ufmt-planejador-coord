@@ -41,30 +41,63 @@ function mudarAba(aba) {
 function renderizarTudo() {
     const ppcVal = document.getElementById('filtroPPC').value;
     const ppcKey = `ppc_${ppcVal}`;
+
+    // Mapeia onde cada disciplina está no planejamento
     const mapaPlano = {};
     Object.entries(plano).forEach(([s, c]) => c.forEach(id => mapaPlano[id] = s));
-    const boxHist = document.getElementById('checklistObrigatorias'); boxHist.innerHTML = '';
+
+    const boxHist = document.getElementById('checklistObrigatorias');
+    boxHist.innerHTML = '';
+
     const semestresData = {};
     obrig.forEach(d => { if(d[ppcKey]) { (semestresData[d[ppcKey]] = semestresData[d[ppcKey]] || []).push(d); } });
 
     Object.keys(semestresData).sort((a,b)=>a-b).forEach(s => {
-        const col = document.createElement('div'); col.className = 'coluna-semestre';
+        const col = document.createElement('div');
+        col.className = 'coluna-semestre';
         col.innerHTML = `<h4>${s}º Semestre</h4>`;
-        const lista = document.createElement('div'); lista.className = 'lista-disciplinas-vertical';
+        const lista = document.createElement('div');
+        lista.className = 'lista-disciplinas-vertical';
+
         semestresData[s].forEach(d => {
             const isChecked = cursadas.includes(d.codigo);
+            const isPlanned = !!mapaPlano[d.codigo]; // Verifica se está no planejamento
+            const semestreDestino = mapaPlano[d.codigo]; // Pega o nome do semestre (ex: 2026/1)
+
             const preReqCodes = d.prerequisitos || [];
             const cumpre = preReqCodes.every(p => cursadas.includes(p));
             const preReqNomes = preReqCodes.map(c => obrig.find(o => o.codigo === c)?.nome || c).join(', ');
+
+            // Lógica de cores:
+            // 1. Verde (active) se cursada
+            // 2. Azul (is-planned) se no planejamento
+            // 3. Vermelho (not-planned) se não cursada E não planejada
+            let statusClass = "";
+            if (isChecked) statusClass = "active";
+            else if (isPlanned) statusClass = "is-planned";
+            else statusClass = "not-planned";
+
             const item = document.createElement('div');
-            item.className = `item-check ${isChecked?'active':''} ${mapaPlano[d.codigo]?'is-planned':''} ${!cumpre && !isChecked ? 'alerta-pre' : ''}`;
-            item.innerHTML = `<div><strong>${d.codigo}</strong><br>${d.nome} ${preReqNomes ? `<div class="tag-pre">Req: ${preReqNomes}</div>` : ''}</div>`;
+            item.className = `item-check ${statusClass} ${!cumpre && !isChecked && !isPlanned ? 'alerta-pre' : ''}`;
+
+            item.innerHTML = `
+                <div>
+                    <strong>${d.codigo}</strong><br>${d.nome}
+                    ${preReqNomes ? `<div class="tag-pre">Req: ${preReqNomes}</div>` : ''}
+                    ${isPlanned ? `<div class="tag-planejado">📅 Planejada p/: ${semestreDestino}</div>` : ''}
+                </div>`;
+
             item.onclick = () => toggle(d.codigo);
             lista.appendChild(item);
         });
-        col.appendChild(lista); boxHist.appendChild(col);
+        col.appendChild(lista);
+        boxHist.appendChild(col);
     });
-    renderizarPendencias(); renderizarGrade(); calcularPrazos();
+
+    renderizarPendencias();
+    renderizarGrade();
+    calcularPrazos();
+
     localStorage.setItem('cursadas_ufmt', JSON.stringify(cursadas));
     localStorage.setItem('plano_ufmt', JSON.stringify(plano));
 }

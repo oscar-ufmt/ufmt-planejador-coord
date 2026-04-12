@@ -105,3 +105,19 @@ button { cursor: pointer; border-radius: 4px; font-weight: 600; padding: 6px 12p
     .coluna-semestre { width: 100% !important; border: 1px solid black !important; margin-bottom: 15px; page-break-inside: avoid; background: white !important; }
     h4 span:last-child, .card-disciplina b { display: none !important; }
 }
+/* Cor vermelha para disciplinas não cursadas e NÃO planejadas */
+.not-planned {
+    background: #fee2e2 !important;
+    border-left: 8px solid var(--danger) !important;
+}
+
+/* Etiqueta para mostrar o semestre planejado no card */
+.tag-planejado {
+    font-size: 0.65rem;
+    color: var(--primary);
+    font-weight: 700;
+    margin-top: 4px;
+    display: block;
+    border-top: 1px dashed var(--primary);
+    padding-top: 2px;
+}
