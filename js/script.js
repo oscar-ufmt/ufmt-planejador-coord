@@ -6,14 +6,10 @@ let semestreAtivo = "";
 
 const REGRAS_PPC = { "2014": { min: 10, max: 15, dil: 17.5 }, "2020": { min: 8, max: 12, dil: 14 }, "2025": { min: 10, max: 15, dil: 17.5 }, "2026": { min: 10, max: 15, dil: 17.5 } };
 const REGRAS_OFERTA = {
-    "2026/1": { "20261": [1], "20251": [2, 4, 6, 8, 9, 10] },
-    "2026/2": { "20261": [2], "20251": [3, 5, 7, 9, 10] },
-    "2027/1": { "20261": [1, 3], "20251": [4, 6, 8, 9, 10] },
-    "2027/2": { "20261": [2, 4], "20251": [5, 7, 9, 10] },
-    "2028/1": { "20261": [1, 3, 5], "20251": [6, 8, 9, 10] },
-    "2028/2": { "20261": [2, 4, 6], "20251": [7, 9, 10] },
-    "2029/1": { "20261": [1, 3, 5, 7], "20251": [8, 9, 10] },
-    "2029/2": { "20261": [2, 4, 6, 8, 9, 10], "20251": [] }
+    "2026/1": { "20261": [1, 3, 5, 7, 9], "20251": [2, 4, 6, 8, 10] },
+    "2026/2": { "20261": [2, 4, 6, 8, 10], "20251": [1, 3, 5, 7, 9] },
+    "2027/1": { "20261": [1, 3, 5, 7, 9], "20251": [2, 4, 6, 8, 10] },
+    "2027/2": { "20261": [2, 4, 6, 8, 10], "20251": [1, 3, 5, 7, 9] }
 };
 
 async function carregar() {
@@ -65,7 +61,7 @@ function renderizarTudo() {
                 item.className = `item-check ${isC?'active':(pS?'is-planned':'not-taken')} ${alertaLateral}`;
                 item.innerHTML = `${isC?'<span class="icon-ok">✓</span>':''}<strong>${d.codigo}</strong>${d.nome}
                     <div class="status-label">${isC?'Cursada':(pS?'Planejada: '+pS:'Não cursada')}</div>
-                    ${preNomes && !isC ? `<div class="tag-pre">Req: ${preNomes}</div>`:''}`;
+                    ${pre.length && !isC ? `<div class="tag-pre">Req: ${preNomes}</div>`:''}`;
                 item.onclick = () => toggle(d.codigo);
                 col.appendChild(item);
             });
@@ -80,7 +76,7 @@ function renderizarPendencias() {
     const box = document.getElementById('listaDisponiveis'); if (!box) return; box.innerHTML = '';
     const info = document.getElementById('infoFiltroOferta');
     if (!semestreAtivo) { info.innerText = "⚠️ Selecione um semestre no plano"; return; }
-    info.innerText = `✅ Filtro: Oferta ${semestreAtivo}`;
+    info.innerText = `✅ Oferta para ${semestreAtivo}`;
     const ja = [...cursadas, ...Object.values(plano).flat()];
     const ofertaRef = REGRAS_OFERTA[semestreAtivo];
     obrig.filter(d => {
@@ -94,6 +90,18 @@ function renderizarPendencias() {
         div.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', d.codigo));
         box.appendChild(div);
     });
+}
+
+function moverParaSemestre(cod, semAlvo) {
+    const d = obrig.find(x => x.codigo === cod);
+    const oferta = REGRAS_OFERTA[semAlvo];
+    if (oferta && d) {
+        const ok26 = d.ppc_20261 && oferta["20261"]?.includes(d.ppc_20261);
+        const ok25 = d.ppc_20251 && oferta["20251"]?.includes(d.ppc_20251);
+        if (!ok26 && !ok25) return alert(`ERRO: A disciplina ${d.nome} não é ofertada em ${semAlvo}.`);
+    }
+    Object.keys(plano).forEach(s => plano[s] = plano[s].filter(c => c !== cod));
+    plano[semAlvo].push(cod); semestreAtivo = semAlvo; renderizarTudo();
 }
 
 function renderizarGrade() {
@@ -119,147 +127,80 @@ function renderizarGrade() {
         col.appendChild(grid); box.appendChild(col);
     });
 }
+
 function gerarRelatorioOferta() {
     const semRef = document.getElementById('selectSemestreRelatorio').value;
     const regrasParaEsteSemestre = REGRAS_OFERTA[semRef];
-
-    if (!baseColegiado.alunos || baseColegiado.alunos.length === 0) {
-        return alert("Carregue a Base Mestre na aba Gestão primeiro.");
-    }
-
+    if (!baseColegiado.alunos || baseColegiado.alunos.length === 0) return alert("Carregue a Base Mestre primeiro.");
     let relatorioMaster = {};
-    const ativos = baseColegiado.alunos.filter(a => a.dados_atuais.status !== "inativo");
 
-    ativos.forEach(aluno => {
+    baseColegiado.alunos.filter(a => a.dados_atuais.status !== "inativo").forEach(aluno => {
         const p = aluno.dados_atuais.plano;
         if (p[semRef]) {
             p[semRef].forEach(cod => {
                 const infoD = obrig.find(x => x.codigo === cod);
                 let ppcEnc = "Extra", semCurr = "Extra";
-
                 if (regrasParaEsteSemestre && infoD) {
                     for (const [pk, semPermitidos] of Object.entries(regrasParaEsteSemestre)) {
                         const semMatriz = infoD[`ppc_${pk}`];
-                        if (semMatriz && semPermitidos.includes(semMatriz)) {
-                            ppcEnc = pk; semCurr = semMatriz; break;
-                        }
+                        if (semMatriz && semPermitidos.includes(semMatriz)) { ppcEnc = pk; semCurr = semMatriz; break; }
                     }
                 }
-
                 if (!relatorioMaster[ppcEnc]) relatorioMaster[ppcEnc] = {};
                 if (!relatorioMaster[ppcEnc][semCurr]) relatorioMaster[ppcEnc][semCurr] = {};
-                if (!relatorioMaster[ppcEnc][semCurr][cod]) {
-                    relatorioMaster[ppcEnc][semCurr][cod] = { nome: (infoD ? infoD.nome : cod), alunos: [] };
-                }
-                if (!relatorioMaster[ppcEnc][semCurr][cod].alunos.includes(aluno.nome)) {
-                    relatorioMaster[ppcEnc][semCurr][cod].alunos.push(aluno.nome);
-                }
+                if (!relatorioMaster[ppcEnc][semCurr][cod]) relatorioMaster[ppcEnc][semCurr][cod] = { nome: (infoD ? infoD.nome : cod), alunos: [] };
+                if (!relatorioMaster[ppcEnc][semCurr][cod].alunos.includes(aluno.nome)) relatorioMaster[ppcEnc][semCurr][cod].alunos.push(aluno.nome);
             });
         }
     });
 
-    const container = document.getElementById('containerRelatorioOferta');
-    container.innerHTML = "";
-
+    const container = document.getElementById('containerRelatorioOferta'); container.innerHTML = "";
     Object.keys(relatorioMaster).sort().forEach(ppc => {
-        let labelPPC = ppc === "Extra" ? "DISCIPLINAS FORA DE GRADE" : `OFERTA PPC ${ppc.slice(0,4)}/${ppc.slice(4)} - SEMESTRE ${semRef}`;
-        let divPPC = document.createElement('div');
-        divPPC.className = 'relatorio-ppc-container';
-
-        let htmlPPC = `<div class="ppc-header-banner">${labelPPC}</div>`;
-
-        Object.keys(relatorioMaster[ppc]).sort((a, b) => a - b).forEach(s => {
-            htmlPPC += `
-                <div class="semestre-divider">${s === "Extra" ? "Extra" : s + "º Semestre Curricular"}</div>
-                <table class="tabela-oferta">
-                    <thead>
-                        <tr>
-                            <th width="10%">Cod</th>
-                            <th width="35%">Disciplina</th>
-                            <th width="5%">Qtd</th>
-                            <th width="50%">Alunos</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-            Object.keys(relatorioMaster[ppc][s]).sort().forEach(c => {
+        let div = document.createElement('div'); div.className = "relatorio-ppc-container";
+        let label = ppc === "Extra" ? "Disciplinas Extras" : `OFERTA DO PPC ${ppc.slice(0,4)}/${ppc.slice(4)}`;
+        let html = `<div class="ppc-header-banner">${label}</div>`;
+        Object.keys(relatorioMaster[ppc]).sort((a,b)=>a-b).forEach(s => {
+            html += `<div class="semestre-divider">${s}º Semestre Curricular</div><table class="tabela-oferta"><tr><th width="10%">Código</th><th width="35%">Disciplina</th><th width="5%">Qtd</th><th>Alunos</th></tr>`;
+            Object.keys(relatorioMaster[ppc][s]).forEach(c => {
                 const d = relatorioMaster[ppc][s][c];
-                htmlPPC += `
-                    <tr>
-                        <td><b>${c}</b></td>
-                        <td>${d.nome}</td>
-                        <td align="center"><b>${d.alunos.length}</b></td>
-                        <td>${d.alunos.map(n => `<span class="chip-aluno">${n}</span>`).join('')}</td>
-                    </tr>`;
+                html += `<tr><td>${c}</td><td>${d.nome}</td><td align="center"><b>${d.alunos.length}</b></td><td>${d.alunos.map(n=>`<span class="chip-aluno">${n}</span>`).join('')}</td></tr>`;
             });
-            htmlPPC += `</tbody></table>`;
+            html += `</table>`;
         });
-        divPPC.innerHTML = htmlPPC;
-        container.appendChild(divPPC);
+        div.innerHTML = html; container.appendChild(div);
     });
 }
 
-function moverParaSemestre(cod, semAlvo) {
-    const d = obrig.find(x => x.codigo === cod);
-    const oferta = REGRAS_OFERTA[semAlvo];
-    if (oferta && d) {
-        const ok26 = d.ppc_20261 && oferta["20261"]?.includes(d.ppc_20261);
-        const ok25 = d.ppc_20251 && oferta["20251"]?.includes(d.ppc_20251);
-        if (!ok26 && !ok25) return alert(`Atenção: A disciplina ${d.nome} não é ofertada em ${semAlvo}.`);
-    }
-    Object.keys(plano).forEach(s => plano[s] = plano[s].filter(c => c !== cod));
-    plano[semAlvo].push(cod); semestreAtivo = semAlvo; renderizarTudo();
-}
 function calcularPrazos() {
     const anoI = parseInt(document.getElementById('ingressoAno').value), semI = parseInt(document.getElementById('ingressoSemestre').value);
     const ppc = document.getElementById('ppcIngresso').value, tranc = parseInt(document.getElementById('trancamentos').value) || 0;
     const regra = REGRAS_PPC[ppc]; if (!regra || isNaN(anoI)) return;
 
-    // Cálculo Semestres Cursados
     const semsPlan = Object.keys(plano).sort();
-    let cursadosSem = 0;
-    if (semsPlan.length > 0) {
-        const [aP, sP] = semsPlan[0].split('/').map(Number);
-        cursadosSem = (aP * 2 + (sP - 1)) - (anoI * 2 + (semI - 1)) - tranc;
-    }
+    let cursadosSem = 0; if (semsPlan.length > 0) { const [aP, sP] = semsPlan[0].split('/').map(Number); cursadosSem = (aP * 2 + (sP - 1)) - (anoI * 2 + (semI - 1)) - tranc; }
 
     const fSem = (a, s, q) => { let t = (a*2+(s-1))+(q-1); return `${Math.floor(t/2)}/${(t%2)+1}`; };
-
-    let chT = 0, chC = 0;
-    obrig.forEach(d => {
-        let v = parseInt(d.carga_horaria) || 0;
-        chT += v;
-        if(cursadas.includes(d.codigo)) chC += v;
-    });
-    const prog = chT > 0 ? ((chC / chT) * 100).toFixed(1) : 0;
-
-    const painel = document.getElementById('painelPrazos');
-    if (painel) {
-        painel.innerHTML = `
-            <div class="card-prazo"><b>Mínimo</b><span>${fSem(anoI, semI, regra.min+tranc)}</span></div>
-            <div class="card-prazo"><b>Máximo Normal</b><span>${fSem(anoI, semI, regra.max+tranc)}</span></div>
-            <div class="card-prazo"><b>Dilação</b><span>${fSem(anoI, semI, Math.floor(regra.dil)+tranc)}</span></div>
-            <div class="card-prazo" style="border-top-color: var(--success)"><b>Cursados / Progresso</b><span>${cursadosSem < 0 ? 0 : cursadosSem} sem. (${prog}%)</span></div>
-        `;
-    }
+    let chT = 0, chC = 0; obrig.forEach(d => { let v = parseInt(d.carga_horaria) || 0; chT += v; if(cursadas.includes(d.codigo)) chC += v; }); prog = chT > 0 ? ((chC / chT) * 100).toFixed(1) : 0;
+    document.getElementById('painelPrazos').innerHTML = `<div class="card-prazo"><b>Mínimo</b><span>${fSem(anoI, semI, regra.min+tranc)}</span></div><div class="card-prazo"><b>Máximo Normal</b><span>${fSem(anoI, semI, regra.max+tranc)}</span></div><div class="card-prazo"><b>Dilação</b><span>${fSem(anoI, semI, Math.floor(regra.dil)+tranc)}</span></div><div class="card-prazo" style="border-top-color: var(--success)"><b>Semestres / Progresso</b><span>${cursadosSem < 0 ? 0 : cursadosSem} (${prog}%)</span></div>`;
 }
 
+// Funções base (Del, Toggle, Seletores, Persistência)
 function delDisc(sem, cod) { plano[sem] = plano[sem].filter(c => c !== cod); renderizarTudo(); }
 function toggle(c) { if(cursadas.includes(c)) cursadas = cursadas.filter(x=>x!==c); else { cursadas.push(c); Object.keys(plano).forEach(s => plano[s] = plano[s].filter(id => id !== c)); } renderizarTudo(); }
-function definirSemestreInicial() { val = document.getElementById('selectSemestreInicial').value; plano = {}; plano[val] = []; semestreAtivo = val; renderizarTudo(); }
-function acrescentarProximoSemestre() { const sems = Object.keys(plano).sort(); if(!sems.length) return alert("Defina início."); let [a, s] = sems[sems.length-1].split('/').map(Number); let nova = s === 1 ? `${a}/2` : `${a+1}/1`; plano[nova] = []; semestreAtivo = nova; renderizarTudo(); }
-function removerSemestre(s) { if(confirm("Remover semestre?")) { delete plano[s]; if(semestreAtivo === s) semestreAtivo = ""; renderizarTudo(); } }
-function mudarAba(aba) { document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none'); document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active')); document.getElementById('aba-' + aba).style.display = 'block'; document.getElementById('btn-' + aba).classList.add('active'); renderizarTudo(); }
-function carregarInfoAdicional() { i = JSON.parse(localStorage.getItem('info_aluno_ufmt')); if(i){ document.getElementById('alunoNome').value=i.nome||""; document.getElementById('alunoSEI').value=i.sei||""; document.getElementById('ingressoAno').value=i.anoIng||"2022"; document.getElementById('ingressoSemestre').value=i.semIng||"1"; document.getElementById('ppcIngresso').value=i.ppcIng||"2026"; document.getElementById('trancamentos').value=i.tranc||"0"; } }
+function definirSemestreInicial() { val = document.getElementById('selectSemestreInicial').value; plano = {}; plano[val] = []; renderizarTudo(); }
+function acrescentarProximoSemestre() { const sems = Object.keys(plano).sort(); if(!sems.length) return alert("Inicie primeiro."); [a, s] = sems[sems.length-1].split('/').map(Number); nova = s === 1 ? `${a}/2` : `${a+1}/1`; plano[nova] = []; renderizarTudo(); }
+function removerSemestre(s) { if(confirm("Remover semestre?")) { delete plano[s]; renderizarTudo(); } }
+function carregarInfoAdicional() { i = JSON.parse(localStorage.getItem('info_aluno_ufmt')); if(i){ document.getElementById('alunoNome').value=i.nome; document.getElementById('alunoSEI').value=i.sei; document.getElementById('ingressoAno').value=i.anoIng; document.getElementById('ingressoSemestre').value=i.semIng; document.getElementById('ppcIngresso').value=i.ppcIng; document.getElementById('trancamentos').value=i.tranc; } }
 function salvarInfoAdicional() { localStorage.setItem('info_aluno_ufmt', JSON.stringify({ nome: document.getElementById('alunoNome').value, sei: document.getElementById('alunoSEI').value, anoIng: document.getElementById('ingressoAno').value, semIng: document.getElementById('ingressoSemestre').value, ppcIng: document.getElementById('ppcIngresso').value, tranc: document.getElementById('trancamentos').value })); calcularPrazos(); }
 function importarBaseColegiado(e) { const r = new FileReader(); r.onload = (ev) => { baseColegiado = JSON.parse(ev.target.result); renderizarListaColegiado(); }; r.readAsText(e.target.files[0]); }
 function salvarAlunoNaBase() { n = document.getElementById('alunoNome').value, s = document.getElementById('alunoSEI').value; snap = { cursadas, plano, info: JSON.parse(localStorage.getItem('info_aluno_ufmt')), status: "ativo" }; a = baseColegiado.alunos.find(x => x.sei === s); if(a) { a.dados_atuais = snap; a.nome = n; } else baseColegiado.alunos.push({ nome: n, sei: s, dados_atuais: snap }); renderizarListaColegiado(); alert("Salvo!"); }
-function renderizarListaColegiado() { box = document.getElementById('listaAlunosColegiado'); if(!box) return; box.innerHTML = ''; baseColegiado.alunos.forEach((a, i) => { isAtivo = a.dados_atuais.status !== "inativo"; box.innerHTML += `<div class="card-aluno-db ${isAtivo?'':'inativo'}"><b>${a.nome}</b><br><small>${a.sei}</small><br><button onclick="carregarAlunoBase(${i})" class="btn-primary" style="font-size:10px">CARREGAR</button><button onclick="toggleStatusAluno(${i})" style="font-size:10px">STATUS</button><button onclick="excluirAlunoBase(${i})" style="font-size:10px; color:red">EXCLUIR</button></div>`; }); }
+function renderizarListaColegiado() { box = document.getElementById('listaAlunosColegiado'); if(!box) return; box.innerHTML = ''; baseColegiado.alunos.forEach((a, i) => { isAtivo = a.dados_atuais.status !== "inativo"; box.innerHTML += `<div class="card-aluno-db ${isAtivo?'':'inativo'}"><b>${a.nome}</b><br><small>${a.sei}</small><br><button onclick="carregarAlunoBase(${i})" class="btn-primary" style="font-size:10px">CARREGAR</button><button onclick="toggleStatusAluno(${i})" style="font-size:10px">${isAtivo?'DESATIVAR':'ATIVAR'}</button><button onclick="excluirAlunoBase(${i})" style="font-size:10px; color:red">EXCLUIR</button></div>`; }); }
 function toggleStatusAluno(i) { baseColegiado.alunos[i].dados_atuais.status = (baseColegiado.alunos[i].dados_atuais.status === "inativo") ? "ativo" : "inativo"; renderizarListaColegiado(); }
 function excluirAlunoBase(i) { if(confirm("Excluir?")) { baseColegiado.alunos.splice(i, 1); renderizarListaColegiado(); } }
 function carregarAlunoBase(i) { d = baseColegiado.alunos[i].dados_atuais; cursadas = d.cursadas; plano = d.plano; localStorage.setItem('info_aluno_ufmt', JSON.stringify(d.info)); carregarInfoAdicional(); renderizarTudo(); }
 function exportarExcel() { let csv = "Semestre;Codigo;Disciplina\n"; Object.keys(plano).sort().forEach(s => { plano[s].forEach(c => { csv += `${s};${c};${getNomeDisc(c)}\n`; }); }); const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = 'plano.csv'; a.click(); }
 function exportarBaseColegiado() { b = new Blob([JSON.stringify(baseColegiado)], {type:'application/json'}); a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'BASE_MESTRE.json'; a.click(); }
-function limparDados() { if(confirm("Limpar tudo?")) { localStorage.clear(); location.reload(); } }
+function limparDados() { if(confirm("Limpar?")) { localStorage.clear(); location.reload(); } }
+function mudarAba(aba) { document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none'); document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active')); document.getElementById('aba-' + aba).style.display = 'block'; document.getElementById('btn-' + aba).classList.add('active'); renderizarTudo(); }
 
 carregar();
