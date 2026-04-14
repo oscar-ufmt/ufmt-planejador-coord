@@ -9,7 +9,6 @@
 </head>
 <body>
 
-
 <header class="main-header">
     <div class="header-container">
         <div class="brand">
@@ -19,8 +18,8 @@
 
         <div class="student-info">
             <div class="input-row">
-                <input type="text" id="alunoNome" placeholder="Nome do Discente" oninput="salvarInfoAdicional()">
-                <input type="text" id="alunoSEI" placeholder="Processo SEI" oninput="salvarInfoAdicional()">
+                <input type="text" id="alunoNome" placeholder="NOME DO DISCENTE" oninput="salvarInfoAdicional()">
+                <input type="text" id="alunoSEI" placeholder="PROCESSO SEI" oninput="salvarInfoAdicional()">
             </div>
             <div class="academic-config">
                 <div class="config-item">
@@ -32,7 +31,7 @@
                     </select>
                 </div>
                 <div class="config-item">
-                    <label>PPC Ingresso:</label>
+                    <label>PPC:</label>
                     <select id="ppcIngresso" onchange="salvarInfoAdicional()">
                         <option value="2014">2014</option>
                         <option value="2020">2020</option>
@@ -48,33 +47,29 @@
         </div>
 
         <div class="actions">
-            <button onclick="gerarPDF()" class="btn-outline">📄 PDF</button>
             <button onclick="exportarExcel()" class="btn-outline">📊 Excel</button>
-            <button onclick="exportarJSON()" class="btn-outline">📤 Exportar Aluno</button>
-            <button onclick="document.getElementById('inputImport').click()" class="btn-outline">📥 Importar Aluno</button>
+            <button onclick="exportarJSON()" class="btn-outline">📤 Exportar</button>
+            <button onclick="document.getElementById('inputImport').click()" class="btn-outline">📥 Importar</button>
             <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarJSON(event)">
-            <button onclick="addSemestre()" class="btn-primary">+ Semestre</button>
             <button onclick="limparDados()" class="btn-danger-outline">Resetar</button>
         </div>
     </div>
 
-    <!-- NAVEGAÇÃO ENTRE ABAS -->
     <div class="tab-nav">
-        <button id="btn-planejador" class="tab-btn active" onclick="mudarAba('planejador')">🛠️ Planejador Individual</button>
-        <button id="btn-gestao" class="tab-btn" onclick="mudarAba('gestao')">📁 Gestão da Base (Colegiado)</button>
-        <button id="btn-oferta" class="tab-btn" onclick="mudarAba('oferta')">📊 Relatório de Oferta Consolidado</button>
+        <button id="btn-fluxograma" class="tab-btn active" onclick="mudarAba('fluxograma')">🗺️ Fluxograma</button>
+        <button id="btn-planejador" class="tab-btn" onclick="mudarAba('planejador')">🛠️ Planejador Individual</button>
+        <button id="btn-gestao" class="tab-btn" onclick="mudarAba('gestao')">📁 Gestão da Base</button>
+        <button id="btn-oferta" class="tab-btn" onclick="mudarAba('oferta')">📊 Relatório de Oferta</button>
     </div>
 </header>
 
 <main class="app-layout">
-
-    <!-- ABA 1: PLANEJADOR (AQUI É ONDE O CAMPO 2 FICA NA ESQUERDA) -->
-    <div id="aba-planejador" class="tab-content">
+    <!-- ABA 1: FLUXOGRAMA HORIZONTAL -->
+    <div id="aba-fluxograma" class="tab-content">
         <div id="painelPrazos" class="painel-prazos"></div>
-
         <section class="secao-historico">
-            <header class="section-header">
-                <h3>1. Fluxograma de Disciplinas (Clique para marcar como Cursada)</h3>
+            <header class="section-header" style="padding: 10px 20px; display: flex; justify-content: space-between;">
+                <h3>1. Fluxograma Curricular (Clique para cursar)</h3>
                 <div class="filtro-box">
                     <label>Ver Oferta PPC:</label>
                     <select id="filtroPPC" onchange="renderizarTudo()">
@@ -83,52 +78,58 @@
                     </select>
                 </div>
             </header>
-            <div id="checklistObrigatorias" class="kanban-container"></div>
+            <div id="checklistObrigatorias" class="kanban-container-horizontal"></div>
         </section>
+    </div>
 
-        <!-- DIVISÃO EM COLUNAS: PENDÊNCIAS (ESQ) | PLANEJAMENTO (DIR) -->
-        <div class="planejamento-split">
-            <aside class="sidebar-pendencias">
+    <!-- ABA 2: PLANEJADOR VERTICAL -->
+    <div id="aba-planejador" class="tab-content" style="display:none">
+        <div class="planejamento-split-vertical">
+            <aside class="sidebar-pendencias-sticky">
                 <h3>2. Pendências</h3>
+                <p id="infoFiltroOferta" style="font-size: 0.7rem; color: #0284c7; font-weight: 800; margin-bottom: 10px;"></p>
                 <div id="listaDisponiveis" class="lista-vertical-cards"></div>
             </aside>
-            <section class="area-grade">
-                <h3>3. Planejamento</h3>
-                <div id="gradeSemestres" class="kanban-container"></div>
+            <section class="area-grade-vertical">
+                <div class="toolbar-planejamento">
+                    <div class="config-item">
+                        <label><b>Semestre Inicial:</b></label>
+                        <select id="selectSemestreInicial"></select>
+                        <button onclick="definirSemestreInicial()" class="btn-primary">Definir Início</button>
+                    </div>
+                    <button onclick="acrescentarProximoSemestre()" class="btn-success">➕ Acrescentar Semestre</button>
+                </div>
+                <div id="gradeSemestres" class="lista-semestres-empilhados"></div>
             </section>
         </div>
     </div>
 
-    <!-- ABA 2: GESTÃO DA BASE -->
+    <!-- ABA 3: GESTÃO -->
     <div id="aba-gestao" class="tab-content" style="display:none; padding: 20px;">
-        <section class="card-prazo" style="text-align: left; padding: 25px; border-top: 5px solid var(--primary); max-width: 1600px; margin: 0 auto;">
-            <h3>📁 Gerenciamento da Base de Dados (Colegiado)</h3>
-            <div class="actions-gestao" style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-                <input type="file" id="importBase" style="display:none" accept=".json" onchange="importarBaseColegiado(event)">
-                <button onclick="document.getElementById('importBase').click()" class="btn-outline-dark">📥 Carregar Base Mestre</button>
-                <button onclick="salvarAlunoNaBase()" class="btn-success">💾 Salvar Aluno Atual na Base</button>
-                <button onclick="exportarBaseColegiado()" class="btn-primary">📤 Baixar Base Atualizada</button>
+        <section class="card-painel">
+            <h3>📁 Gestão da Base de Dados</h3>
+            <div class="actions-gestao">
+                <input type="file" id="importBase" style="display:none" onchange="importarBaseColegiado(event)">
+                <button onclick="document.getElementById('importBase').click()" class="btn-outline-dark">Carregar Base Mestre</button>
+                <button onclick="salvarAlunoNaBase()" class="btn-success">Salvar Atual</button>
+                <button onclick="exportarBaseColegiado()" class="btn-primary">Baixar Base</button>
             </div>
-            <div id="statusBase" style="margin-bottom: 20px; font-weight: bold;">Nenhuma base carregada.</div>
             <div id="listaAlunosColegiado" class="grid-alunos"></div>
         </section>
     </div>
 
-    <!-- ABA 3: RELATÓRIO CONSOLIDADO -->
+    <!-- ABA 4: RELATÓRIO ESTILO EXCEL -->
     <div id="aba-oferta" class="tab-content" style="display:none; padding: 20px;">
-        <section style="max-width: 1600px; margin: 0 auto;">
-            <div class="card-prazo" style="text-align: left; padding: 25px;">
-                <h3>📊 Consolidação de Oferta por Semestre</h3>
-                <div class="input-relatorio-box" style="display: flex; gap: 10px; align-items: center; margin: 20px 0;">
-                    <label><b>Semestre de Referência:</b></label>
-                    <input type="text" id="inputSemestreRelatorio" placeholder="Ex: 2026/2" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <button onclick="gerarRelatorioOferta()" class="btn-primary">Gerar Relatório</button>
-                </div>
-                <div id="containerRelatorioOferta"></div>
+        <section class="card-painel">
+            <h3>📊 Relatório de Oferta Consolidado</h3>
+            <div class="input-relatorio-box" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+                <label>Semestre:</label>
+                <select id="selectSemestreRelatorio" style="padding: 10px;"></select>
+                <button onclick="gerarRelatorioOferta()" class="btn-primary">Gerar Relatório</button>
             </div>
+            <div id="containerRelatorioOferta"></div>
         </section>
     </div>
-
 </main>
 
 <script src="js/script.js"></script>
