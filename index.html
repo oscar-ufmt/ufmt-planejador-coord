@@ -16,7 +16,6 @@
             <span>Planejador Acadêmico</span>
         </div>
 
-
         <div class="student-info">
             <div class="input-row">
                 <input type="text" id="alunoNome" placeholder="NOME DO DISCENTE" oninput="salvarInfoAdicional()">
@@ -51,7 +50,7 @@
             <button onclick="exportarExcel()" class="btn-outline">📊 Excel</button>
             <button onclick="exportarJSON()" class="btn-outline">📤 Exportar</button>
             <button onclick="document.getElementById('inputImport').click()" class="btn-outline">📥 Importar</button>
-            <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarJSON(event)">
+            <input type="file" id="inputImport" style="display:none" accept=".json" onchange="importarJSON(this)">
             <button onclick="limparDados()" class="btn-danger-outline">Resetar</button>
         </div>
     </div>
@@ -65,12 +64,11 @@
 </header>
 
 <main class="app-layout">
-    <!-- ABA 1: FLUXOGRAMA HORIZONTAL -->
     <div id="aba-fluxograma" class="tab-content">
         <div id="painelPrazos" class="painel-prazos"></div>
         <section class="secao-historico">
             <header class="section-header" style="padding: 10px 20px; display: flex; justify-content: space-between;">
-                <h3>1. Fluxograma Curricular (Clique para cursar)</h3>
+                <h3>1. Fluxograma Curricular</h3>
                 <div class="filtro-box">
                     <label>Ver Oferta PPC:</label>
                     <select id="filtroPPC" onchange="renderizarTudo()">
@@ -83,7 +81,6 @@
         </section>
     </div>
 
-    <!-- ABA 2: PLANEJADOR VERTICAL -->
     <div id="aba-planejador" class="tab-content" style="display:none">
         <div class="planejamento-split-vertical">
             <aside class="sidebar-pendencias-sticky">
@@ -105,7 +102,6 @@
         </div>
     </div>
 
-    <!-- ABA 3: GESTÃO -->
     <div id="aba-gestao" class="tab-content" style="display:none; padding: 20px;">
         <section class="card-painel">
             <h3>📁 Gestão da Base de Dados</h3>
@@ -119,7 +115,6 @@
         </section>
     </div>
 
-    <!-- ABA 4: RELATÓRIO ESTILO EXCEL -->
     <div id="aba-oferta" class="tab-content" style="display:none; padding: 20px;">
         <section class="card-painel">
             <h3>📊 Relatório de Oferta Consolidado</h3>
