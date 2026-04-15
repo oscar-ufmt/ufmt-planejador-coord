@@ -96,61 +96,93 @@ function calcularPrazos() {
         `;
     }
 }
-
-// --- RENDERIZAÇÃO ---
 function renderizarTudo() {
     const filterEl = document.getElementById('filtroPPC');
     const ppcKey = filterEl ? `ppc_${filterEl.value}` : "ppc_20261";
     const mapaPlano = {};
+
+    // Mapeia o que está planejado para saber em qual semestre aparece
     Object.entries(plano).forEach(([s, c]) => c.forEach(id => mapaPlano[id] = s));
 
     const boxFlux = document.getElementById('checklistObrigatorias');
     if (boxFlux) {
         boxFlux.innerHTML = '';
         const semsData = {};
-        obrig.forEach(d => { if(d[ppcKey]) (semsData[d[ppcKey]] = semsData[d[ppcKey]] || []).push(d); });
+
+        // Organiza as disciplinas por semestre do PPC
+        obrig.forEach(d => {
+            if(d[ppcKey]) (semsData[d[ppcKey]] = semsData[d[ppcKey]] || []).push(d);
+        });
+
         Object.keys(semsData).sort((a,b)=>a-b).forEach(s => {
-            const col = document.createElement('div'); col.className = 'coluna-semestre';
+            const col = document.createElement('div');
+            col.className = 'coluna-semestre';
             col.innerHTML = `<h4>${s}º Semestre</h4>`;
+
             semsData[s].forEach(d => {
-                const isC = cursadas.includes(d.codigo), pS = mapaPlano[d.codigo];
-                const pre = d.prerequisitos || [], cumpre = pre.every(p => cursadas.includes(p));
+                const isC = cursadas.includes(d.codigo);
+                const pS = mapaPlano[d.codigo];
+                const pre = d.prerequisitos || [];
+                // Verifica se o aluno já cursou os pré-requisitos
+                const cumpre = pre.every(p => cursadas.includes(p));
+                const preNomes = pre.map(c => getNomeDisc(c)).join(', ');
+
                 const item = document.createElement('div');
-                item.className = `item-check ${isC?'active':(pS?'is-planned':'not-taken')} ${(!isC && !cumpre)?'alerta-pre-lateral':''}`;
-                item.innerHTML = `${isC?'✓ ':''}<strong>${d.codigo}</strong> ${d.nome}
-                    <div class="status-label">${isC?'Cursada':(pS?'Planejada: '+pS:'Não cursada')}</div>`;
+                // Alerta se não cursou e não cumpre os requisitos
+                const alertaLateral = (!isC && !cumpre) ? 'alerta-pre-lateral' : '';
+
+                item.className = `item-check ${isC ? 'active' : (pS ? 'is-planned' : 'not-taken')} ${alertaLateral}`;
+
+                item.innerHTML = `
+                    ${isC ? '<span class="icon-ok">✓</span>' : ''}
+                    <strong>${d.codigo}</strong> ${d.nome}
+                    <div class="status-label">
+                        ${isC ? 'Cursada' : (pS ? 'Planejada: ' + pS : 'Não cursada')}
+                    </div>
+                    ${pre.length && !isC ? `<div class="tag-pre">Req: ${preNomes}</div>` : ''}
+                `;
+
                 item.onclick = () => toggle(d.codigo);
                 col.appendChild(item);
             });
             boxFlux.appendChild(col);
         });
     }
-    renderizarPendencias(); renderizarGrade(); calcularPrazos();
+
+    renderizarPendencias();
+    renderizarGrade();
+    calcularPrazos();
+
     localStorage.setItem('cursadas_ufmt', JSON.stringify(cursadas));
     localStorage.setItem('plano_ufmt', JSON.stringify(plano));
 }
-
 function renderizarPendencias() {
     const box = document.getElementById('listaDisponiveis'); if (!box) return; box.innerHTML = '';
     const info = document.getElementById('infoFiltroOferta');
     if (!semestreAtivo) { info.innerText = "⚠️ Selecione um semestre no plano"; return; }
+
     info.innerText = `✅ Oferta para ${semestreAtivo}`;
     const ja = [...cursadas, ...Object.values(plano).flat()];
     const ofertaRef = REGRAS_OFERTA[semestreAtivo];
+
     obrig.filter(d => {
         if(ja.includes(d.codigo)) return false;
         if(!ofertaRef) return true;
         return (ofertaRef["20261"]?.includes(d.ppc_20261)) || (ofertaRef["20251"]?.includes(d.ppc_20251));
     }).forEach(d => {
         const div = document.createElement('div'); div.className = 'mini-card'; div.draggable = true;
-        div.innerHTML = `<b>${d.codigo}</b> ${d.nome}`;
+        const preNomes = (d.prerequisitos || []).map(c => getNomeDisc(c)).join(', ');
+
+        div.innerHTML = `<b>${d.codigo}</b> ${d.nome} ${preNomes ? `<div class="tag-pre">Req: ${preNomes}</div>` : ''}`;
         div.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', d.codigo));
         box.appendChild(div);
     });
 }
-
 function renderizarGrade() {
-    const box = document.getElementById('gradeSemestres'); if (!box) return; box.innerHTML = '';
+    const box = document.getElementById('gradeSemestres');
+    if (!box) return;
+    box.innerHTML = '';
+
     Object.entries(plano).sort().forEach(([sem, cods]) => {
         const col = document.createElement('div');
         col.className = `bloco-semestre-vertical ${sem === semestreAtivo ? 'selecionado' : ''}`;
@@ -158,18 +190,38 @@ function renderizarGrade() {
         col.addEventListener('dragover', (e) => e.preventDefault());
         col.addEventListener('drop', (e) => { e.preventDefault(); moverParaSemestre(e.dataTransfer.getData('text/plain'), sem); });
 
-        let cr = 0; cods.forEach(c => { const d = obrig.find(x => x.codigo === c); if(d) cr += (parseInt(d.carga_horaria) || 0) / 16; });
-        col.innerHTML = `<h4>${sem} <small class="badge-creditos">${cr} CR</small> <span onclick="removerSemestre('${sem}')" style="cursor:pointer">×</span></h4>`;
-
-        const grid = document.createElement('div'); grid.className = 'grid-disciplinas';
+        // Cálculo de créditos do semestre
+        let cr = 0;
         cods.forEach(c => {
             const d = obrig.find(x => x.codigo === c);
+            if(d) cr += (parseInt(d.carga_horaria) || 0) / 16;
+        });
+
+        col.innerHTML = `<h4><span>${sem} <small class="badge-creditos">${cr} CR</small></span> <span onclick="removerSemestre('${sem}')" style="cursor:pointer">×</span></h4>`;
+
+        const grid = document.createElement('div');
+        grid.className = 'grid-disciplinas';
+
+        cods.forEach(c => {
+            const d = obrig.find(x => x.codigo === c);
+            const pre = d?.prerequisitos || [];
+            // Filtra quais pré-requisitos ainda não foram marcados como cursados
+            const faltam = pre.filter(p => !cursadas.includes(p));
+
             const card = document.createElement('div');
-            card.className = `card-disciplina`;
-            card.innerHTML = `<span class="btn-del-item" onclick="event.stopPropagation(); delDisc('${sem}','${c}')">×</span><strong>${c}</strong> ${d?.nome}`;
+            // Adiciona a classe de alerta se houver pendência de pré-requisito
+            card.className = `card-disciplina ${faltam.length > 0 ? 'alerta-pre-lateral' : ''}`;
+
+            card.innerHTML = `
+                <span class="btn-del-item" onclick="event.stopPropagation(); delDisc('${sem}','${c}')">×</span>
+                <strong>${c}</strong> ${d?.nome || c}
+                ${faltam.length ? `<div class="tag-pre">Falta: ${faltam.map(p => getNomeDisc(p)).join(', ')}</div>` : ''}
+            `;
             grid.appendChild(card);
         });
-        col.appendChild(grid); box.appendChild(col);
+
+        col.appendChild(grid);
+        box.appendChild(col);
     });
 }
 
