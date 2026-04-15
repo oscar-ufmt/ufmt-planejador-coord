@@ -4,7 +4,13 @@ let plano = JSON.parse(localStorage.getItem('plano_ufmt')) || {};
 let baseColegiado = { organizacao: "UFMT", ultima_atualizacao: "", alunos: [] };
 let semestreAtivo = "";
 
-const REGRAS_PPC = { "2014": { min: 10, max: 15, dil: 17.5 }, "2020": { min: 8, max: 12, dil: 14 }, "2025": { min: 10, max: 15, dil: 17.5 }, "2026": { min: 10, max: 15, dil: 17.5 } };
+const REGRAS_PPC = {
+    "2014": { min: 10, max: 15, dil: 17.5 },
+    "2020": { min: 8, max: 12, dil: 14 },
+    "2025": { min: 10, max: 15, dil: 17.5 },
+    "2026": { min: 10, max: 15, dil: 17.5 }
+};
+
 const REGRAS_OFERTA = {
     "2026/1": { "20261": [1], "20251": [2, 4, 6, 8, 9, 10] },
     "2026/2": { "20261": [2], "20251": [3, 5, 7, 9, 10] },
@@ -41,6 +47,54 @@ function preencherSeletores() {
             for (let s = 1; s <= 2; s++) { sel.add(new Option(`${ano+i}/${s}`, `${ano+i}/${s}`)); }
         }
     });
+}
+
+// --- CÁLCULOS DE PRAZOS E PROGRESSO (RESTAURADO) ---
+function calcularPrazos() {
+    const anoI = parseInt(document.getElementById('ingressoAno').value);
+    const semI = parseInt(document.getElementById('ingressoSemestre').value);
+    const ppc = document.getElementById('ppcIngresso').value;
+    const tranc = parseInt(document.getElementById('trancamentos').value) || 0;
+    const regra = REGRAS_PPC[ppc];
+
+    if (!regra || isNaN(anoI)) return;
+
+    // 1. Cálculo de Semestres Decorridos (Baseado no primeiro semestre do plano vs Ingresso)
+    const semsPlan = Object.keys(plano).sort();
+    let cursadosSem = 0;
+    if (semsPlan.length > 0) {
+        const [aP, sP] = semsPlan[0].split('/').map(Number);
+        cursadosSem = (aP * 2 + (sP - 1)) - (anoI * 2 + (semI - 1)) - tranc;
+    }
+
+    // 2. Cálculo de Progresso por Carga Horária
+    let chT = 0, chC = 0;
+    obrig.forEach(d => {
+        let v = parseInt(d.carga_horaria) || 0;
+        chT += v;
+        if (cursadas.includes(d.codigo)) chC += v;
+    });
+    const prog = chT > 0 ? ((chC / chT) * 100).toFixed(1) : 0;
+
+    // 3. Função Auxiliar para formatar semestres futuros
+    const fSem = (a, s, q) => {
+        let t = (a * 2 + (s - 1)) + (q - 1);
+        return `${Math.floor(t / 2)}/${(t % 2) + 1}`;
+    };
+
+    // 4. Renderização dos 4 Cards
+    const painel = document.getElementById('painelPrazos');
+    if (painel) {
+        painel.innerHTML = `
+            <div class="card-prazo"><b>Mínimo</b><span>${fSem(anoI, semI, regra.min + tranc)}</span></div>
+            <div class="card-prazo"><b>Máximo Normal</b><span>${fSem(anoI, semI, regra.max + tranc)}</span></div>
+            <div class="card-prazo"><b>Dilação</b><span>${fSem(anoI, semI, Math.floor(regra.dil) + tranc)}</span></div>
+            <div class="card-prazo" style="border-top: 3px solid var(--success)">
+                <b>Semestres / Progresso</b>
+                <span>${cursadosSem < 0 ? 0 : cursadosSem} (${prog}%)</span>
+            </div>
+        `;
+    }
 }
 
 // --- RENDERIZAÇÃO ---
@@ -119,14 +173,13 @@ function renderizarGrade() {
     });
 }
 
-// --- RELATÓRIO DE OFERTA CONSOLIDADO ---
+// --- RELATÓRIO DE OFERTA ---
 function gerarRelatorioOferta() {
     const semRef = document.getElementById('selectSemestreRelatorio').value;
     const regrasParaEsteSemestre = REGRAS_OFERTA[semRef];
     if (!baseColegiado.alunos || baseColegiado.alunos.length === 0) return alert("Carregue a Base Mestre primeiro.");
 
     let relatorioMaster = {};
-
     baseColegiado.alunos.filter(a => a.dados_atuais.status !== "inativo").forEach(aluno => {
         const p = aluno.dados_atuais.plano;
         if (p[semRef]) {
@@ -164,7 +217,7 @@ function gerarRelatorioOferta() {
     });
 }
 
-// --- IMPORTAÇÃO / EXPORTAÇÃO ---
+// --- GESTÃO E PERSISTÊNCIA ---
 function exportarJSON() {
     const dados = { cursadas, plano, info: JSON.parse(localStorage.getItem('info_aluno_ufmt')) };
     const blob = new Blob([JSON.stringify(dados, null, 2)], {type : 'application/json'});
@@ -187,16 +240,12 @@ function importarJSON(input) {
     reader.readAsText(el.files[0]);
 }
 
-// --- GESTÃO DA BASE MESTRE ---
 function importarBaseColegiado(e) {
     const el = e.target ? e.target : e;
     if (!el.files.length) return;
     const r = new FileReader();
     r.onload = (ev) => {
-        try {
-            baseColegiado = JSON.parse(ev.target.result);
-            renderizarListaColegiado();
-        } catch (err) { alert("Erro ao carregar Base Mestre."); }
+        try { baseColegiado = JSON.parse(ev.target.result); renderizarListaColegiado(); } catch (err) { alert("Erro ao carregar Base Mestre."); }
     };
     r.readAsText(el.files[0]);
 }
@@ -205,70 +254,30 @@ function salvarAlunoNaBase() {
     const n = document.getElementById('alunoNome').value;
     const s = document.getElementById('alunoSEI').value;
     if(!n || !s) return alert("Preencha Nome e Processo SEI");
-
-    const snap = {
-        cursadas,
-        plano,
-        info: JSON.parse(localStorage.getItem('info_aluno_ufmt')),
-        status: "ativo"
-    };
-
+    const snap = { cursadas, plano, info: JSON.parse(localStorage.getItem('info_aluno_ufmt')), status: "ativo" };
     let a = baseColegiado.alunos.find(x => x.sei === s);
-    if(a) {
-        a.dados_atuais = snap; a.nome = n;
-    } else {
-        baseColegiado.alunos.push({ nome: n, sei: s, dados_atuais: snap });
-    }
-    renderizarListaColegiado();
-    alert("Aluno salvo na Base Mestre!");
+    if(a) { a.dados_atuais = snap; a.nome = n; } else { baseColegiado.alunos.push({ nome: n, sei: s, dados_atuais: snap }); }
+    renderizarListaColegiado(); alert("Aluno salvo na Base Mestre!");
 }
 
 function renderizarListaColegiado() {
-    const box = document.getElementById('listaAlunosColegiado');
-    if(!box) return; box.innerHTML = '';
+    const box = document.getElementById('listaAlunosColegiado'); if(!box) return; box.innerHTML = '';
     baseColegiado.alunos.forEach((a, i) => {
         const isAtivo = a.dados_atuais.status !== "inativo";
-        box.innerHTML += `
-            <div class="card-aluno-db ${isAtivo?'':'inativo'}">
-                <b>${a.nome}</b><br><small>${a.sei}</small><br>
-                <div style="margin-top:5px; display:flex; gap:2px">
-                    <button onclick="carregarAlunoBase(${i})" class="btn-primary" style="font-size:9px; padding:2px">CARREGAR</button>
-                    <button onclick="toggleStatusAluno(${i})" style="font-size:9px; padding:2px">${isAtivo?'DESATIVAR':'ATIVAR'}</button>
-                    <button onclick="excluirAlunoBase(${i})" style="font-size:9px; padding:2px; color:red">EXCLUIR</button>
-                </div>
-            </div>`;
+        box.innerHTML += `<div class="card-aluno-db ${isAtivo?'':'inativo'}"><b>${a.nome}</b><br><small>${a.sei}</small><br><div style="margin-top:5px; display:flex; gap:2px"><button onclick="carregarAlunoBase(${i})" class="btn-primary" style="font-size:9px; padding:2px">CARREGAR</button><button onclick="toggleStatusAluno(${i})" style="font-size:9px; padding:2px">${isAtivo?'DESATIVAR':'ATIVAR'}</button><button onclick="excluirAlunoBase(${i})" style="font-size:9px; padding:2px; color:red">EXCLUIR</button></div></div>`;
     });
 }
 
 function carregarAlunoBase(i) {
-    const d = baseColegiado.alunos[i].dados_atuais;
-    cursadas = d.cursadas;
-    plano = d.plano;
-    localStorage.setItem('info_aluno_ufmt', JSON.stringify(d.info));
-    carregarInfoAdicional();
-    renderizarTudo();
-    alert("Dados do aluno carregados!");
+    const d = baseColegiado.alunos[i].dados_atuais; cursadas = d.cursadas; plano = d.plano;
+    localStorage.setItem('info_aluno_ufmt', JSON.stringify(d.info)); carregarInfoAdicional(); renderizarTudo();
 }
 
-function toggleStatusAluno(i) {
-    baseColegiado.alunos[i].dados_atuais.status = (baseColegiado.alunos[i].dados_atuais.status === "inativo") ? "ativo" : "inativo";
-    renderizarListaColegiado();
-}
+function toggleStatusAluno(i) { baseColegiado.alunos[i].dados_atuais.status = (baseColegiado.alunos[i].dados_atuais.status === "inativo") ? "ativo" : "inativo"; renderizarListaColegiado(); }
+function excluirAlunoBase(i) { if(confirm("Excluir aluno?")) { baseColegiado.alunos.splice(i, 1); renderizarListaColegiado(); } }
+function exportarBaseColegiado() { const b = new Blob([JSON.stringify(baseColegiado, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'BASE_MESTRE_UFMT.json'; a.click(); }
 
-function excluirAlunoBase(i) {
-    if(confirm("Deseja realmente excluir este aluno da base?")) {
-        baseColegiado.alunos.splice(i, 1);
-        renderizarListaColegiado();
-    }
-}
-
-function exportarBaseColegiado() {
-    const b = new Blob([JSON.stringify(baseColegiado, null, 2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(b);
-    a.download = 'BASE_MESTRE_UFMT.json'; a.click();
-}
-
-// --- AUXILIARES E CÁLCULOS ---
+// --- AUXILIARES ---
 function moverParaSemestre(cod, semAlvo) {
     const d = obrig.find(x => x.codigo === cod);
     const oferta = REGRAS_OFERTA[semAlvo];
@@ -280,17 +289,6 @@ function moverParaSemestre(cod, semAlvo) {
     Object.keys(plano).forEach(s => plano[s] = plano[s].filter(c => c !== cod));
     if(!plano[semAlvo]) plano[semAlvo] = [];
     plano[semAlvo].push(cod); renderizarTudo();
-}
-
-function calcularPrazos() {
-    const anoI = parseInt(document.getElementById('ingressoAno').value), semI = parseInt(document.getElementById('ingressoSemestre').value);
-    const ppc = document.getElementById('ppcIngresso').value, tranc = parseInt(document.getElementById('trancamentos').value) || 0;
-    const regra = REGRAS_PPC[ppc]; if (!regra || isNaN(anoI)) return;
-    const fSem = (a, s, q) => { let t = (a*2+(s-1))+(q-1); return `${Math.floor(t/2)}/${(t%2)+1}`; };
-    document.getElementById('painelPrazos').innerHTML = `
-        <div class="card-prazo"><b>Mínimo</b><span>${fSem(anoI, semI, regra.min+tranc)}</span></div>
-        <div class="card-prazo"><b>Máximo</b><span>${fSem(anoI, semI, regra.max+tranc)}</span></div>
-        <div class="card-prazo"><b>Dilação</b><span>${fSem(anoI, semI, Math.floor(regra.dil)+tranc)}</span></div>`;
 }
 
 function delDisc(sem, cod) { plano[sem] = plano[sem].filter(c => c !== cod); renderizarTudo(); }
