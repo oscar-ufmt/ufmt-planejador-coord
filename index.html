@@ -120,8 +120,15 @@
             <h3>📊 Relatório de Oferta Consolidado</h3>
             <div class="input-relatorio-box" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
                 <label>Semestre:</label>
+                <!-- O select será preenchido pelo JS -->
                 <select id="selectSemestreRelatorio" style="padding: 10px;"></select>
-                <button onclick="gerarRelatorioOferta()" class="btn-primary">Gerar Relatório</button>
+
+                <button onclick="gerarRelatorioOferta()" class="btn-primary">Visualizar Relatório</button>
+
+                <!-- NOVO BOTÃO -->
+                <button onclick="exportarRelatorioOfertaJSON()" class="btn-success" style="background-color: #0284c7;">
+                    📦 Baixar JSON Consolidado
+                </button>
             </div>
             <div id="containerRelatorioOferta"></div>
         </section>

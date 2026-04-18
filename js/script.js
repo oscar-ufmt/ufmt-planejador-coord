@@ -342,6 +342,80 @@ function moverParaSemestre(cod, semAlvo) {
     if(!plano[semAlvo]) plano[semAlvo] = [];
     plano[semAlvo].push(cod); renderizarTudo();
 }
+function exportarRelatorioOfertaJSON() {
+    // Pega o semestre selecionado no select do relatório
+    const semRef = document.getElementById('selectSemestreRelatorio').value;
+
+    if(!semRef) return alert("Selecione um semestre.");
+    if (!baseColegiado.alunos || baseColegiado.alunos.length === 0) {
+        return alert("Não há alunos na Base Mestre. Carregue a base primeiro na aba 'Gestão'.");
+    }
+
+    const regrasParaEsteSemestre = REGRAS_OFERTA[semRef];
+
+    // Objeto que será o nosso arquivo final
+    let relatorioJSON = {
+        meta: {
+            semestre_referencia: semRef,
+            data_geracao: new Date().toLocaleString(),
+            total_alunos: baseColegiado.alunos.length
+        },
+        consolidado: {}
+    };
+
+    baseColegiado.alunos.forEach(aluno => {
+        const planoAluno = aluno.dados_atuais.plano;
+
+        // Verifica se o aluno tem algo planejado para este semestre
+        if(planoAluno[semRef]) {
+            planoAluno[semRef].forEach(codDisciplina => {
+                const infoD = obrig.find(x => x.codigo === codDisciplina);
+
+                let ppcPertencente = "Extra";
+                let semestreNoPPC = "Extra";
+
+                // Lógica de classificação baseada nas REGRAS_OFERTA
+                if (regrasParaEsteSemestre && infoD) {
+                    for (const [ppcKey, semestresPermitidos] of Object.entries(regrasParaEsteSemestre)) {
+                        const sCurricular = infoD[`ppc_${ppcKey}`];
+                        if (sCurricular && semestresPermitidos.includes(sCurricular)) {
+                            ppcPertencente = ppcKey;
+                            semestreNoPPC = sCurricular;
+                            break;
+                        }
+                    }
+                }
+
+                // Cria a estrutura no JSON se não existir
+                if(!relatorioJSON.consolidado[ppcPertencente]) relatorioJSON.consolidado[ppcPertencente] = {};
+                if(!relatorioJSON.consolidado[ppcPertencente][semestreNoPPC]) relatorioJSON.consolidado[ppcPertencente][semestreNoPPC] = {};
+
+                if(!relatorioJSON.consolidado[ppcPertencente][semestreNoPPC][codDisciplina]) {
+                    relatorioJSON.consolidado[ppcPertencente][semestreNoPPC][codDisciplina] = {
+                        nome: (infoD ? infoD.nome : "Desconhecida"),
+                        qtd_alunos: 0,
+                        lista_alunos: []
+                    };
+                }
+
+                // Adiciona o aluno à disciplina (evitando duplicatas)
+                if(!relatorioJSON.consolidado[ppcPertencente][semestreNoPPC][codDisciplina].lista_alunos.includes(aluno.nome)) {
+                    relatorioJSON.consolidado[ppcPertencente][semestreNoPPC][codDisciplina].lista_alunos.push(aluno.nome);
+                    relatorioJSON.consolidado[ppcPertencente][semestreNoPPC][codDisciplina].qtd_alunos++;
+                }
+            });
+        }
+    });
+
+    // Processo de Download do JSON
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(relatorioJSON, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `consolidado_${semRef.replace('/', '_')}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
 
 function delDisc(sem, cod) { plano[sem] = plano[sem].filter(c => c !== cod); renderizarTudo(); }
 function toggle(c) { cursadas.includes(c) ? cursadas = cursadas.filter(x=>x!==c) : cursadas.push(c); renderizarTudo(); }
