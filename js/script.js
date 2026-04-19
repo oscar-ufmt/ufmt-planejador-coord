@@ -417,6 +417,58 @@ function exportarRelatorioOfertaJSON() {
     downloadAnchorNode.remove();
 }
 
+function exportarTabelaPlanoHTML() {
+    const sems = Object.keys(plano).sort();
+    const win = window.open('', '', 'width=900,height=800');
+
+    let h = `<html><head><title>Plano de Estudos - Engenharia</title><style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+        th, td { border: 1px solid #000; padding: 10px; text-align: left; font-size: 13px; }
+        th { background-color: #f2f2f2; text-transform: uppercase; letter-spacing: 1px; }
+        .semestre-col { font-weight: bold; background: #fafafa; width: 100px; text-align: center; vertical-align: middle; }
+        .codigo-col { width: 120px; font-family: monospace; }
+        .nome-col { background: #fff; }
+        h2 { border-bottom: 2px solid #003d79; padding-bottom: 10px; color: #003d79; }
+        .btn-print { background: #003d79; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; margin-bottom: 20px; }
+        @media print { .btn-print { display: none; } }
+    </style></head><body>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    <h2>Plano de Oferta de Disciplinas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th class="semestre-col">Período</th>
+                <th class="codigo-col">Código</th>
+                <th class="nome-col">Disciplina</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    sems.forEach(sem => {
+        const cods = plano[sem];
+        if (cods.length > 0) {
+            cods.forEach((cod, index) => {
+                h += `<tr>`;
+                // O período só aparece na primeira linha do grupo
+                if (index === 0) {
+                    h += `<td class="semestre-col" rowspan="${cods.length}">${sem}</td>`;
+                }
+                h += `<td class="codigo-col">${cod}</td>`;
+                h += `<td class="nome-col">${getNomeDisc(cod)}</td>`;
+                h += `</tr>`;
+            });
+        }
+    });
+
+    h += `</tbody></table></body></html>`;
+
+    win.document.write(h);
+    win.document.close();
+}
+
+
+
 function delDisc(sem, cod) { plano[sem] = plano[sem].filter(c => c !== cod); renderizarTudo(); }
 function toggle(c) { cursadas.includes(c) ? cursadas = cursadas.filter(x=>x!==c) : cursadas.push(c); renderizarTudo(); }
 function definirSemestreInicial() { val = document.getElementById('selectSemestreInicial').value; plano = {}; plano[val] = []; renderizarTudo(); }
